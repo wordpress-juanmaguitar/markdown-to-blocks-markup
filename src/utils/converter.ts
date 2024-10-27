@@ -1,9 +1,6 @@
-import { marked } from "marked";
-import { createBlock, serialize, serializeRawBlock } from "@wordpress/blocks";
-import "../blocky-formats/vendor/commonmark.min.js";
-import { markdownToBlocks } from "../blocky-formats/src/markdown.js";
-
+import { createBlock, serialize } from "@wordpress/blocks";
 import { registerCoreBlocks } from "@wordpress/block-library";
+import { markdownToBlocks } from "./markdown.js";
 
 registerCoreBlocks();
 const createBlocks = (blocks) =>
