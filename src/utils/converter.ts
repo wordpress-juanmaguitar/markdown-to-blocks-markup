@@ -1,6 +1,6 @@
 import { createBlock, serialize } from "@wordpress/blocks";
 import { registerCoreBlocks } from "@wordpress/block-library";
-import { markdownToBlocks } from "./markdown.js";
+import { markdownToBlocks } from "./markdown/index.ts";
 
 registerCoreBlocks();
 const createBlocks = (blocks) =>

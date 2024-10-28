@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ES2022",
-    "sourceMap": true
+    "sourceMap": true,
+    "lib": ["DOM", "ES2022"]
   },
   "files": [],
   "references": [
