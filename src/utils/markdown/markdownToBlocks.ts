@@ -1,6 +1,12 @@
 import * as commonmark from "commonmark";
 const { Parser, Renderer } = commonmark;
 
+interface Block {
+  name: string;
+  attributes: Record<string, string | number | boolean | null>;
+  innerBlocks: Block[];
+}
+
 /**
  * Matches Jekyll-style front-matter at the start of a Markdown document.
  *
@@ -8,6 +14,12 @@ const { Parser, Renderer } = commonmark;
  */
 const frontMatterPattern: RegExp = /---\s*\n(.*?)\n?(?:---|\.\.\.)\s*\n/sy;
 
+/**
+ * Escape a string for use in HTML content.
+ *
+ * @param {string} s
+ * @return {string}
+ */
 const escapeHTML = (s: string): string =>
   s.replace(/[<&>'"]/g, (m) => {
     switch (m[0]) {
@@ -26,33 +38,47 @@ const escapeHTML = (s: string): string =>
     }
   });
 
-const render = (ast: any): any[] => {
-  const blocks = { name: "root", attributes: {}, innerBlocks: [] as any[] };
-  let event;
-  let lastNode;
-  const walker = ast.walker();
+const render = (ast: commonmark.Node): Block[] => {
+  const block: Block = {
+    name: "root",
+    attributes: {},
+    innerBlocks: [],
+  };
+  let event: commonmark.NodeWalkingStep | null;
+  let lastNode: commonmark.Node | null = null;
+  const walker: commonmark.NodeWalker = ast.walker();
 
   while ((event = walker.next())) {
     lastNode = event.node;
   }
 
-  if (lastNode.type !== "document") {
+  if (!lastNode || lastNode.type !== "document") {
     throw new Error("Expected a document node");
   }
 
-  nodeToBlock(blocks, lastNode.firstChild);
-  return blocks.innerBlocks;
+  nodeToBlock(block, lastNode.firstChild);
+  return block.innerBlocks;
 };
 
-const nodeToBlock = (parentBlock: any, node: any): void => {
-  const add = (block: any): void => {
+const nodeToBlock = (
+  parentBlock: Block,
+  node: commonmark.Node | null
+): void => {
+  if (!node || !parentBlock) {
+    throw new Error("Expected a node and a parentBlock");
+  }
+  const add = (block: Block): void => {
     parentBlock.innerBlocks.push(block);
   };
 
-  const block = { name: "", attributes: {}, innerBlocks: [] as any[] };
+  const block = {
+    name: "",
+    attributes: {},
+    innerBlocks: [] as Block[],
+  } as Block;
   let skipChildren = false;
 
-  switch (node.type || null) {
+  switch (node.type) {
     case "document":
       return;
     case "image":
