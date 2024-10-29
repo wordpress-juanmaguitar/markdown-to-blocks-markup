@@ -10,9 +10,7 @@ function convertToJsonString(content) {
     .trim()
     .replace(/\\/g, "\\\\") // Escape backslashes
     .replace(/'/g, "\\'") // Escape single quotes for JSON
-    .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/[\n\r]+/g, "")
-    .replace(/\s{2,10}/g, " ");
+    .replace(/"/g, '\\"'); // Escape double quotes
 
   // URL encode the processed content for inclusion in the URL
   return processedContent;
@@ -32,7 +30,7 @@ export const Preview: React.FC<PreviewProps> = ({ content }) => {
 
   const handlePreviewInPlayground = () => {
     let markupBlocks = content;
-    let postSlug = "";
+    let postSlug = "preview-post-from-markdown";
     let postTitle = "Preview%20post%20from%20markdown";
     const h1Pattern =
       /<!-- wp:heading \{"level":1\} -->\s*<h1[^>]*>(.*?)<\/h1>\s*<!-- \/wp:heading -->/;
@@ -58,7 +56,7 @@ export const Preview: React.FC<PreviewProps> = ({ content }) => {
         },
       ],
     };
-
+    // builder/builder.html
     const url = `https://playground.wordpress.net/#${JSON.stringify(
       blueprint
     )}`;
