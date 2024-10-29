@@ -5,7 +5,8 @@
  * exercise left up to the reader.
  */
 
-import { markdownToBlocks } from "./markdownToBlocks.ts";
+import { markdownToBlocks, Block } from "./markdownToBlocks.ts";
 import { blocks2markdown } from "./blocks2markdown.ts";
 
 export { markdownToBlocks, blocks2markdown };
+export type { Block };

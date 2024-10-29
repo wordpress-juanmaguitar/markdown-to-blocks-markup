@@ -2,8 +2,19 @@ import { createBlock, serialize } from "@wordpress/blocks";
 import { registerCoreBlocks } from "@wordpress/block-library";
 import { markdownToBlocks } from "./markdown/index.ts";
 
+import type { Block } from "./markdown/index.ts";
+
+interface EditorBlock {
+  clientId: string;
+  name: string;
+  isValid: boolean;
+  attributes: Record<string, string | number | boolean | null>;
+  innerBlocks: EditorBlock[];
+}
+
 registerCoreBlocks();
-const createBlocks = (blocks) =>
+
+const createBlocks = (blocks: Block[]): EditorBlock[] =>
   blocks.map((block) =>
     createBlock(block.name, block.attributes, createBlocks(block.innerBlocks))
   );

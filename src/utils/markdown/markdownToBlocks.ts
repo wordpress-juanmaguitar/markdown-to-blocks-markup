@@ -1,7 +1,7 @@
 import * as commonmark from "commonmark";
-const { Parser, Renderer } = commonmark;
+const { Parser } = commonmark;
 
-interface Block {
+export interface Block {
   name: string;
   attributes: Record<string, string | number | boolean | null>;
   innerBlocks: Block[];
@@ -38,6 +38,17 @@ const escapeHTML = (s: string): string =>
     }
   });
 
+/**
+ * Converts a CommonMark AST into an array of WordPress Blocks.
+ *
+ * This function walks through the given CommonMark abstract syntax tree (AST),
+ * extracts the nodes, and transforms them into WordPress block structures.
+ * The resulting blocks are collected within a root block and returned as an array.
+ *
+ * @param {commonmark.Node} ast - The CommonMark AST to be converted.
+ * @returns {Block[]} An array of WordPress Blocks derived from the AST.
+ * @throws Will throw an error if the AST does not contain any nodes.
+ */
 const render = (ast: commonmark.Node): Block[] => {
   const block: Block = {
     name: "root",
@@ -49,24 +60,26 @@ const render = (ast: commonmark.Node): Block[] => {
   const walker: commonmark.NodeWalker = ast.walker();
 
   while ((event = walker.next())) {
-    lastNode = event.node;
+    lastNode = event?.node;
   }
-
-  if (!lastNode || lastNode.type !== "document") {
-    throw new Error("Expected a document node");
+  if (!lastNode) {
+    throw new Error("No last node");
   }
-
-  nodeToBlock(block, lastNode.firstChild);
+  nodeToBlock(block, lastNode.firstChild!);
   return block.innerBlocks;
 };
 
-const nodeToBlock = (
-  parentBlock: Block,
-  node: commonmark.Node | null
-): void => {
-  if (!node || !parentBlock) {
-    throw new Error("Expected a node and a parentBlock");
-  }
+/**
+ * Transforms a CommonMark node into a WordPress Block and appends it to a parent block.
+ *
+ * This function iterates over the provided CommonMark node, converts it into a WordPress block
+ * based on its type, and recursively processes its children if necessary. The resulting block
+ * is then added to the parent block's inner blocks.
+ *
+ * @param {Block} parentBlock - The parent block to which the converted block is appended.
+ * @param {commonmark.Node} node - The CommonMark node to be converted into a WordPress Block.
+ */
+const nodeToBlock = (parentBlock: Block, node: commonmark.Node): void => {
   const add = (block: Block): void => {
     parentBlock.innerBlocks.push(block);
   };
@@ -81,23 +94,26 @@ const nodeToBlock = (
   switch (node.type) {
     case "document":
       return;
-    case "image":
+    case "image": {
       block.name = "core/image";
-      block.attributes.url = node._destination;
+      block.attributes.url = node.destination;
       if (node._description) block.attributes.alt = node._description;
-      if (node._title) block.attributes.title = node._title;
+      if (node.title) block.attributes.title = node.title;
       break;
-    case "list":
+    }
+    case "list": {
       block.name = "core/list";
-      block.attributes.ordered = node._listData.type === "ordered";
-      if (node._listData.start && node._listData.start !== 1) {
-        block.attributes.start = node._listData.start;
+      block.attributes.ordered = node.listType === "ordered";
+      if (node.listStart && node.listStart !== 1) {
+        block.attributes.start = node.listStart;
       }
       break;
-    case "block_quote":
+    }
+    case "block_quote": {
       block.name = "core/quote";
       break;
-    case "item":
+    }
+    case "item": {
       block.name = "core/list-item";
       let innerNode = node.firstChild;
       while (innerNode) {
@@ -113,27 +129,34 @@ const nodeToBlock = (
       }
       skipChildren = true;
       break;
-    case "heading":
+    }
+    case "heading": {
       block.name = "core/heading";
       block.attributes.level = node.level;
       block.attributes.content = inlineBlocksToHTML("", node.firstChild);
       skipChildren = true;
       break;
-    case "thematic_break":
+    }
+    case "thematic_break": {
       block.name = "core/separator";
       break;
-    case "code_block":
+    }
+    case "code_block": {
       block.name = "core/code";
       if (typeof node.info === "string" && node.info !== "") {
         block.attributes.language = node.info.replace(/[ \t\r\n\f].*/, "");
       }
-      block.attributes.content = node.literal.trim().replace(/\n/g, "<br>");
+      if (node.literal) {
+        block.attributes.content = node.literal.trim().replace(/\n/g, "<br>");
+      }
       break;
-    case "html_block":
+    }
+    case "html_block": {
       block.name = "core/html";
       block.attributes.content = node.literal;
       break;
-    case "paragraph":
+    }
+    case "paragraph": {
       if (
         node.firstChild &&
         node.firstChild.type === "image" &&
@@ -141,9 +164,9 @@ const nodeToBlock = (
       ) {
         const image = node.firstChild;
         block.name = "core/image";
-        block.attributes.url = image._destination;
+        block.attributes.url = image.destination;
         block.attributes.caption =
-          image._title || inlineBlocksToHTML("", image.firstChild);
+          image.title || inlineBlocksToHTML("", image.firstChild);
         if (image._description) block.attributes.alt = image._description;
         skipChildren = true;
         break;
@@ -152,6 +175,7 @@ const nodeToBlock = (
       block.attributes.content = inlineBlocksToHTML("", node.firstChild);
       skipChildren = true;
       break;
+    }
     default:
       console.log(node);
   }
@@ -167,7 +191,18 @@ const nodeToBlock = (
   }
 };
 
-const inlineBlocksToHTML = (html: string, node: any): string => {
+/**
+ * Recursively traverse a CommonMark inline node and convert it into an
+ * HTML string.
+ *
+ * @param {string} html - The HTML string to append to.
+ * @param {commonmark.Node | null} node - The CommonMark node to convert.
+ * @return {string} The resulting HTML string.
+ */
+const inlineBlocksToHTML = (
+  html: string,
+  node: commonmark.Node | null
+): string => {
   if (!node) return html;
 
   const add = (s: string): void => {
@@ -175,6 +210,7 @@ const inlineBlocksToHTML = (html: string, node: any): string => {
   };
 
   const surround = (before: string, after: string): void => {
+    if (!node.firstChild) return;
     add(before + inlineBlocksToHTML("", node.firstChild) + after);
   };
 
@@ -194,34 +230,46 @@ const inlineBlocksToHTML = (html: string, node: any): string => {
   };
 
   switch (node.type) {
-    case "code":
-      add(`<code>${escapeHTML(node.literal)}</code>`);
+    case "code": {
+      if (node.literal) {
+        add(`<code>${escapeHTML(node.literal)}</code>`);
+      }
       break;
-    case "emph":
+    }
+    case "emph": {
       addTag("em");
       break;
-    case "html_inline":
-      add(escapeHTML(node.literal));
+    }
+    case "html_inline": {
+      if (node.literal) {
+        add(escapeHTML(node.literal));
+      }
       break;
-    case "image":
+    }
+    case "image": {
       addTag("img", {
-        src: node._destination,
-        title: node._title || null,
+        src: node.destination,
+        title: node.title || null,
         alt: node._description || null,
       });
       break;
-    case "link":
-      addTag("a", { href: node._destination, title: node._title || null });
+    }
+    case "link": {
+      addTag("a", { href: node.destination, title: node.title || null });
       break;
-    case "softbreak":
+    }
+    case "softbreak": {
       add("<br>");
       break;
-    case "strong":
+    }
+    case "strong": {
       addTag("strong");
       break;
-    case "text":
+    }
+    case "text": {
       add(node.literal);
       break;
+    }
     default:
       console.log(node);
   }
@@ -231,23 +279,12 @@ const inlineBlocksToHTML = (html: string, node: any): string => {
   return html;
 };
 
-class WpBlocksRenderer extends Renderer {
-  options: object;
-  constructor(options: object) {
-    super();
-    this.options = options;
-  }
-
-  get render() {
-    return render;
-  }
-
-  esc(s: string): string {
-    return s;
-  }
-}
-
-export const markdownToBlocks = (input: string): any[] => {
+/**
+ * Convert a Markdown document to an array of WordPress Gutenberg Blocks.
+ * @param input - The Markdown document to convert.
+ * @returns An array of WordPress Gutenberg Blocks.
+ */
+export const markdownToBlocks = (input: string): Block[] => {
   const frontMatterMatch = frontMatterPattern.exec(input);
   const foundFrontMatter = frontMatterMatch !== null;
   // const frontMatter = foundFrontMatter ? frontMatterMatch[1] : null;
@@ -258,7 +295,6 @@ export const markdownToBlocks = (input: string): any[] => {
 
   const parser = new Parser();
   const ast = parser.parse(markdownDocument);
-  const blockRenderer = new WpBlocksRenderer({ sourcepos: true });
 
-  return blockRenderer.render(ast);
+  return render(ast);
 };
