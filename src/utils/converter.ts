@@ -1,4 +1,4 @@
-import { createBlock, serialize } from "@wordpress/blocks";
+import { createBlock, serialize, serializeRawBlock } from "@wordpress/blocks";
 import { registerCoreBlocks } from "@wordpress/block-library";
 import { markdownToBlocks } from "./markdown/index.ts";
 
