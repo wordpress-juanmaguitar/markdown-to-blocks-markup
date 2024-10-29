@@ -49,7 +49,7 @@ const escapeHTML = (s: string): string =>
  * @returns {Block[]} An array of WordPress Blocks derived from the AST.
  * @throws Will throw an error if the AST does not contain any nodes.
  */
-const render = (ast: commonmark.Node): Block[] => {
+const fromAstToWPBlocks = (ast: commonmark.Node): Block[] => {
   const block: Block = {
     name: "root",
     attributes: {},
@@ -267,7 +267,9 @@ const inlineBlocksToHTML = (
       break;
     }
     case "text": {
-      add(node.literal);
+      if (node.literal) {
+        add(node.literal);
+      }
       break;
     }
     default:
@@ -296,5 +298,5 @@ export const markdownToBlocks = (input: string): Block[] => {
   const parser = new Parser();
   const ast = parser.parse(markdownDocument);
 
-  return render(ast);
+  return fromAstToWPBlocks(ast);
 };
