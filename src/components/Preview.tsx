@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Copy, Check, Code2, PlayCircle, ChevronDown } from "lucide-react";
+import { Copy, Check, Code2, PlayCircle } from "lucide-react";
 
 interface PreviewProps {
   content: string;
 }
-function convertToJsonString(content) {
+
+function convertToJsonString(content: string) {
   // Remove newlines and extra spaces for JSON compatibility
   const processedContent = content
     .trim()
@@ -18,13 +19,10 @@ function convertToJsonString(content) {
 
 export const Preview: React.FC<PreviewProps> = ({ content }) => {
   const [copied, setCopied] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content);
     setCopied(true);
-    setIsOpen(false);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -62,19 +60,7 @@ export const Preview: React.FC<PreviewProps> = ({ content }) => {
     )}`;
     console.log({ url });
     window.open(url, "_blank");
-    setIsOpen(false);
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   return (
     <div className="space-y-3">
@@ -85,52 +71,28 @@ export const Preview: React.FC<PreviewProps> = ({ content }) => {
           </h3>
           <p className="text-sm text-gray-600">Ready to use in WordPress</p>
         </div>
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                <span>Copy Blocks</span>
-              </>
-            )}
-            <ChevronDown className="w-4 h-4 opacity-70" />
-          </button>
 
-          {isOpen && (
-            <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-              <button
-                onClick={handleCopy}
-                className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-              >
-                <Copy className="w-4 h-4" />
-                Copy Blocks
-              </button>
-              <button
-                onClick={handlePreviewInPlayground}
-                className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-              >
-                <PlayCircle className="w-4 h-4" />
-                Preview in Playground
-              </button>
-            </div>
-          )}
+        <div className="flex gap-2">
+          <button
+            onClick={handlePreviewInPlayground}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+          >
+            <PlayCircle className="w-4 h-4" />
+            <span>Preview in Playground</span>
+          </button>
         </div>
       </div>
+
       <div className="relative group">
-        <div className="absolute -inset-px bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl blur opacity-20" />
+        <div className="absolute -inset-px bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-xl blur opacity-20"></div>
         <div className="relative">
           <div className="absolute top-0 right-0 p-2 flex items-center gap-2">
             <Code2 className="w-4 h-4 text-gray-400" />
-            <span className="text-xs text-gray-500 font-medium">
-              Gutenberg Format
+            <span
+              className="text-xs text-gray-500 font-medium cursor-pointer"
+              onClick={handleCopy}
+            >
+              {copied ? "Copied!" : "Copy Blocks"}
             </span>
           </div>
           <pre className="w-full h-[600px] px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl overflow-auto text-gray-800 font-mono text-sm scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300">

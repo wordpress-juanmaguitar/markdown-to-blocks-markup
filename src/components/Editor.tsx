@@ -50,7 +50,7 @@ export const Editor: React.FC<EditorProps> = ({ value, onChange }) => {
           />
           <button
             onClick={handleImportClick}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors group"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-800 rounded-lg transition-colors"
           >
             <FileDown className="w-4 h-4 group-hover:scale-110 transition-transform" />
             Import Markdown
