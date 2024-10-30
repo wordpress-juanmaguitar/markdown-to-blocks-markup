@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from "react";
+import { useState } from "react";
 import Split from "react-split";
-import { FileEdit, Copy } from "lucide-react";
+import { FileEdit, Github } from "lucide-react";
 import { Editor } from "./components/Editor";
 import { Preview } from "./components/Preview";
 import { convertToWordPressBlocks } from "./utils/converter";
@@ -24,6 +24,8 @@ function hello() {
 }
 \`\`\``;
 
+const URL_REPO =
+  "https://github.com/wordpress-juanmaguitar/markdown-to-blocks-markup";
 function App() {
   const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN);
 
@@ -37,6 +39,17 @@ function App() {
               <h1 className="text-xl font-semibold text-gray-900">
                 Markdown to WordPress Blocks
               </h1>
+            </div>
+            <div>
+              <a
+                href={URL_REPO}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-gray-500 hover:text-gray-700"
+              >
+                <Github size={24} />{" "}
+                <p>{URL_REPO.replace("https://github.com/", "")}</p>
+              </a>
             </div>
           </div>
         </div>
